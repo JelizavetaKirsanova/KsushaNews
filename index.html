@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4efe6" />
+    <title>Ксюша News — хорошее случается</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="grain"></div>
+    <header class="site-header">
+      <a class="logo" href="#home" aria-label="Ксюша News, на главную">
+        <span>Ксюша</span>
+        <i>News</i>
+      </a>
+      <button class="menu-button" id="menuButton" aria-expanded="false" aria-controls="menu">Меню <span></span></button>
+      <nav class="main-nav" id="menu">
+        <a href="#home" class="active">Все новости</a>
+        <a href="#жизнь" data-filter="жизнь">Жизнь</a>
+        <a href="#вдохновение" data-filter="вдохновение">Вдохновение</a>
+        <a href="#места" data-filter="места">Места</a>
+      </nav>
+    </header>
+
+    <main id="app"></main>
+
+    <footer class="site-footer">
+      <a class="logo" href="#home"><span>Ксюша</span><i>News</i></a>
+      <p>Маленькая редакция больших новостей о Ксюше.</p>
+      <p class="footer-date">Выпуск № 24 · 2026</p>
+    </footer>
+
+    <template id="homeTemplate">
+      <section class="hero-wrap">
+        <div class="edition-line"><span>Таллин · Эстония</span><span>Добрые вести ежедневно</span><span id="today"></span></div>
+        <div class="hero-grid">
+          <article class="hero-copy">
+            <p class="eyebrow">Экстренный репортаж</p>
+            <h1>Операция<br><em>«Персеиды»</em>:<br>ночное расследование.</h1>
+            <p class="intro">Как безобидная поездка посмотреть на звёзды обернулась погоней, автокинотеатром, пледом и традиционным кофе на заправке.</p>
+            <a class="text-link" href="#article/perseids">Читать репортаж <span>↗</span></a>
+          </article>
+          <a class="hero-photo article-link" href="#article/perseids" aria-label="Открыть экстренный репортаж">
+            <img src="assets/perseids-sky-1.jpg" alt="Звёздное небо во время наблюдения за Персеидами" />
+            <span class="photo-caption">Фото: архив операции «Персеиды»</span>
+            <span class="hero-sticker">дело<br><b>№ 0812</b></span>
+          </a>
+        </div>
+      </section>
+
+      <section class="ticker" aria-label="Темы выпуска">
+        <span>СВЕЖЕЕ</span><b>✦</b><span>КОФЕ И РАЗГОВОРЫ</span><b>✦</b><span>ЛЮБИМЫЕ МЕСТА</span><b>✦</b><span>ХОРОШИЕ НОВОСТИ</span><b>✦</b><span>СВЕЖЕЕ</span><b>✦</b>
+      </section>
+
+      <section class="stories-section">
+        <div class="section-heading"><p class="eyebrow">Свежий выпуск</p><h2>Новости из жизни<br>одного очень <em>интересного</em> человека.</h2></div>
+        <div class="stories-grid" id="storiesGrid"></div>
+      </section>
+
+      <section class="quote-band">
+        <p class="eyebrow">Цитата редакции</p>
+        <blockquote>«Ничего особенного — тоже<br>может быть очень <em>особенным</em>».</blockquote>
+        <p>— Ксюша, в разговоре с собой</p>
+      </section>
+
+      <section class="mini-stories" id="miniStories"></section>
+      <section class="newsletter">
+        <div><p class="eyebrow">Письмо из редакции</p><h2>Только хорошие<br>новости.</h2></div>
+        <div><p>Никакого спама. Просто напоминание иногда остановиться, оглядеться и найти что-то своё.</p><button class="subscribe-button" id="subscribeButton">Подписаться <span>→</span></button><small id="subscribeNote"></small></div>
+      </section>
+    </template>
+
+    <template id="articleTemplate">
+      <article class="article-page" id="articlePage"></article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
