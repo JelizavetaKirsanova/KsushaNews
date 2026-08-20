@@ -1,4 +1,4 @@
-const stories = [
+let stories = [
   {
     id: 'perseids', category: 'экстренно', date: '13 августа', reading: '7 минут',
     title: 'Операция «Персеиды»: как безобидная поездка посмотреть на звёзды превратилась в ночное расследование',
@@ -98,6 +98,7 @@ const stories = [
   }
 ];
 
+const seedStories = structuredClone(stories);
 const app = document.querySelector('#app');
 const date = new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric' }).format(new Date());
 
@@ -117,9 +118,10 @@ function renderHome(filter) {
   app.innerHTML = document.querySelector('#homeTemplate').innerHTML;
   document.title = 'Ксюша News — хорошее случается';
   document.querySelector('#today').textContent = date;
-  const list = filter ? stories.filter(story => story.category === filter) : stories.slice(1, 4);
+  const visibleStories = stories.filter(story => story.id !== 'perseids');
+  const list = filter ? stories.filter(story => story.category === filter) : visibleStories.slice(0, 3);
   document.querySelector('#storiesGrid').innerHTML = list.map(card).join('');
-  document.querySelector('#miniStories').innerHTML = stories.slice(3).map(miniCard).join('');
+  document.querySelector('#miniStories').innerHTML = visibleStories.slice(3).map(miniCard).join('');
   document.querySelectorAll('.main-nav a').forEach(link => link.classList.toggle('active', (!filter && !link.dataset.filter) || link.dataset.filter === filter));
   document.querySelector('#subscribeButton').addEventListener('click', e => {
     e.currentTarget.textContent = 'Вы уже в списке ✦';
@@ -146,7 +148,8 @@ function renderArticle(id) {
     <div class="article-gallery">${gallery}</div>
     ${videoArchive}
     ${story.sections ? `<blockquote class="article-pullquote report-quote">${story.quote}</blockquote>` : `<div class="article-body"><p>Фотографии остались в телефоне, а ощущение — где-то намного ближе. Наверное, в этом и состоит главный итог дня: замечать его, пока он происходит.</p></div>`}
-    <footer class="article-footer"><div class="tag-list">${story.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}</div><a href="#home" class="next-link">К остальным новостям →</a></footer>`;
+    <footer class="article-footer"><div class="tag-list">${story.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}</div><div class="article-actions"><button class="delete-article" data-id="${story.id}">Удалить новость</button><a href="#home" class="next-link">К остальным новостям →</a></div></footer>`;
+  document.querySelector('.delete-article').addEventListener('click', () => deleteNews(story));
 }
 
 function route() {
@@ -164,5 +167,129 @@ document.querySelector('#menuButton').addEventListener('click', () => {
   const open = menu.classList.toggle('open');
   document.querySelector('#menuButton').setAttribute('aria-expanded', String(open));
 });
+
+const composer = document.querySelector('#newsComposer');
+const composerForm = document.querySelector('#newsForm');
+const composerStatus = document.querySelector('#formStatus');
+
+function showComposer() {
+  if (location.protocol === 'file:') {
+    composerStatus.textContent = 'Чтобы сохранять публикации, откройте сайт через «npm start».';
+  } else {
+    composerStatus.textContent = '';
+  }
+  composerForm.elements.date.value ||= new Date().toISOString().slice(0, 10);
+  composer.showModal();
+}
+
+function closeComposer() {
+  composer.close();
+  composerStatus.textContent = '';
+}
+
+function toDateLabel(value) {
+  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(new Date(`${value}T12:00:00`));
+}
+
+function contentToSections(content) {
+  const sections = [];
+  let current = { paragraphs: [] };
+  content.trim().split(/\n\s*\n/).map(block => block.trim()).filter(Boolean).forEach(block => {
+    const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
+    if (lines[0]?.startsWith('##')) {
+      if (current.paragraphs.length || current.heading) sections.push(current);
+      current = { heading: lines.shift().replace(/^##\s*/, ''), paragraphs: [] };
+    }
+    if (lines.length) current.paragraphs.push(lines.join(' '));
+  });
+  if (current.paragraphs.length || current.heading) sections.push(current);
+  return sections;
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return [];
+  const data = new FormData();
+  files.forEach(file => data.append('files', file));
+  const response = await fetch('/api/uploads', { method: 'POST', body: data });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Не удалось загрузить файлы.');
+  return result.uploads;
+}
+
+async function publishNews(event) {
+  event.preventDefault();
+  if (location.protocol === 'file:') {
+    composerStatus.textContent = 'Сервер не запущен. В терминале проекта выполните: npm start';
+    return;
+  }
+  const submit = composerForm.querySelector('[type="submit"]');
+  const formData = new FormData(composerForm);
+  submit.disabled = true;
+  composerStatus.textContent = 'Загружаю материалы и сохраняю статью…';
+  try {
+    const images = await uploadFiles(Array.from(composerForm.elements.images.files));
+    const videos = await uploadFiles(Array.from(composerForm.elements.videos.files));
+    const payload = {
+      title: formData.get('title').trim(), category: formData.get('category'), date: toDateLabel(formData.get('date')),
+      reading: formData.get('reading').trim() || '4 минуты', deck: formData.get('deck').trim(), lead: formData.get('lead').trim(),
+      sections: contentToSections(formData.get('content')), quote: formData.get('quote').trim(),
+      tags: formData.get('tags').split(',').map(tag => tag.trim()).filter(Boolean),
+      image: images[0]?.url, hero: images[0]?.url, gallery: images.map(item => item.url),
+      videos: videos.map((video, index) => ({ src: video.url, type: video.type, label: `Видео из архива № ${String(index + 1).padStart(2, '0')}` }))
+    };
+    const response = await fetch('/api/news', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const created = await response.json();
+    if (!response.ok) throw new Error(created.error || 'Не удалось сохранить новость.');
+    stories.unshift(created);
+    composerForm.reset();
+    closeComposer();
+    location.hash = `#article/${created.id}`;
+  } catch (error) {
+    composerStatus.textContent = error.message || 'Что-то пошло не так. Попробуйте ещё раз.';
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function loadStoriesFromDatabase() {
+  if (location.protocol === 'file:') return;
+  try {
+    const response = await fetch('/api/news');
+    if (!response.ok) throw new Error('База данных недоступна.');
+    const saved = await response.json();
+    if (saved.length) stories = saved;
+    else {
+      const seed = await fetch('/api/news/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(seedStories) });
+      if (seed.ok) stories = await seed.json();
+    }
+    route();
+  } catch (error) {
+    console.warn('Не удалось загрузить новости из базы данных:', error);
+  }
+}
+
+async function deleteNews(story) {
+  if (location.protocol === 'file:') {
+    window.alert('Для удаления новостей запустите сайт через npm start.');
+    return;
+  }
+  const confirmed = window.confirm(`Удалить новость «${story.title}»? Это действие нельзя отменить.`);
+  if (!confirmed) return;
+  try {
+    const response = await fetch(`/api/news/${encodeURIComponent(story.id)}`, { method: 'DELETE' });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Не удалось удалить новость.');
+    stories = stories.filter(item => item.id !== story.id);
+    location.hash = '#home';
+  } catch (error) {
+    window.alert(error.message || 'Не удалось удалить новость.');
+  }
+}
+
+document.querySelector('#openComposer').addEventListener('click', showComposer);
+document.querySelector('#closeComposer').addEventListener('click', closeComposer);
+document.querySelector('#cancelComposer').addEventListener('click', closeComposer);
+composerForm.addEventListener('submit', publishNews);
 window.addEventListener('hashchange', route);
 route();
+loadStoriesFromDatabase();

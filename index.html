@@ -17,6 +17,7 @@
         <span>Ксюша</span>
         <i>News</i>
       </a>
+      <button class="add-news-button" id="openComposer">+ Добавить новость</button>
       <button class="menu-button" id="menuButton" aria-expanded="false" aria-controls="menu">Меню <span></span></button>
       <nav class="main-nav" id="menu">
         <a href="#home" class="active">Все новости</a>
@@ -33,6 +34,27 @@
       <p>Маленькая редакция больших новостей о Ксюше.</p>
       <p class="footer-date">Выпуск № 24 · 2026</p>
     </footer>
+
+    <dialog class="news-composer" id="newsComposer" aria-labelledby="composerTitle">
+      <div class="composer-shell">
+        <div class="composer-heading">
+          <div><p class="eyebrow">Редакционный кабинет</p><h2 id="composerTitle">Новая новость</h2></div>
+          <button class="dialog-close" id="closeComposer" aria-label="Закрыть форму">×</button>
+        </div>
+        <form id="newsForm" class="news-form">
+          <div class="form-row form-row--wide"><label>Заголовок<input name="title" required maxlength="180" placeholder="Например, Операция «...»"></label></div>
+          <div class="form-row"><label>Рубрика<select name="category"><option value="экстренно">Экстренно</option><option value="жизнь">Жизнь</option><option value="вдохновение">Вдохновение</option><option value="места">Места</option></select></label><label>Дата<input name="date" type="date" required></label><label>Время чтения<input name="reading" value="4 минуты" maxlength="30"></label></div>
+          <div class="form-row form-row--wide"><label>Короткое описание<input name="deck" required maxlength="280" placeholder="Текст для карточки новости"></label></div>
+          <div class="form-row form-row--wide"><label>Лид статьи<textarea name="lead" required rows="3" placeholder="Короткий абзац под заголовком"></textarea></label></div>
+          <div class="form-row form-row--wide"><label>Текст статьи<textarea name="content" required rows="14" placeholder="Пишите текст абзацами. Для подзаголовка начните строку с ##, например: ## Главный поворот"></textarea><small>Абзацы разделяйте пустой строкой; подзаголовки начните с <code>##</code>.</small></label></div>
+          <div class="form-row form-row--wide"><label>Цитата (необязательно)<input name="quote" maxlength="250" placeholder="Фраза, которую хочется выделить"></label></div>
+          <div class="form-row form-row--wide"><label>Теги через запятую<input name="tags" maxlength="200" placeholder="море, поездка, лучшие истории"></label></div>
+          <div class="form-row"><label>Фотографии<input name="images" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple required><small>Первая фотография станет обложкой.</small></label><label>Видео (необязательно)<input name="videos" type="file" accept="video/mp4,video/quicktime,video/webm" multiple><small>Поддерживаются MP4, MOV и WebM.</small></label></div>
+          <p class="form-status" id="formStatus" aria-live="polite"></p>
+          <div class="form-actions"><button type="button" class="cancel-button" id="cancelComposer">Отмена</button><button class="publish-button" type="submit">Опубликовать <span>↗</span></button></div>
+        </form>
+      </div>
+    </dialog>
 
     <template id="homeTemplate">
       <section class="hero-wrap">
